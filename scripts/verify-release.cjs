@@ -15,7 +15,7 @@ function rel(filePath) {
 }
 
 function readText(relativePath) {
-  return fs.readFileSync(path.join(root, relativePath), 'utf8').replace(/^\uFEFF/, '');
+  return fs.readFileSync(path.join(root, relativePath), 'utf8').replace(/^\uFEFF/, '').replace(/\r\n?/g, '\n');
 }
 
 function fail(message) {
