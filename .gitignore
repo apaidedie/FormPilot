@@ -1,0 +1,39 @@
+# Local tooling state
+.playwright-cli/
+
+# Local AI/Trellis workflow state
+.agents/
+.codex/
+.trellis/
+
+# Dependency folders if a future workflow adds tooling
+node_modules/
+
+# Python cache from Trellis helper scripts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Browser extension packaging output
+dist/
+build/
+*.crx
+*.pem
+*.zip
+
+# OS and editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+
+# Logs and temporary files
+*.log
+output/fixture-server.*
+tmp/
+temp/

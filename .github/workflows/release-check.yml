@@ -1,0 +1,66 @@
+name: Release Check
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  static:
+    name: Static release gate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Package extension
+        run: node scripts/package-extension.cjs
+
+      - name: Run release verification
+        run: node scripts/verify-release.cjs
+
+      - name: Run fixture contract verification
+        run: node scripts/verify-fixture.cjs
+
+      - name: Inspect package boundary
+        run: node scripts/verify-package.cjs
+
+      - name: Upload packaged zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: formpilot-extension
+          path: dist/formpilot-*.zip
+          if-no-files-found: error
+
+  browser:
+    name: Browser QA
+    runs-on: windows-latest
+    needs: static
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Run browser fixture verification
+        run: node scripts/verify-fixture-browser.cjs
+
+      - name: Run popup keyboard verification
+        run: node scripts/verify-popup-keyboard.cjs
+
+      - name: Render marketing assets
+        run: node scripts/render-hero.cjs

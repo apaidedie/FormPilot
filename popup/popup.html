@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FormPilot</title>
+  <link rel="icon" href="../icons/icon16.png" type="image/png">
+  <link rel="stylesheet" href="popup.css">
+</head>
+
+<body>
+  <div class="container">
+    <header class="header">
+      <div class="brand-block">
+        <span class="brand-mark" aria-hidden="true">FP</span>
+        <div class="brand-copy">
+          <h1>FormPilot</h1>
+          <p class="tagline">表单测试工作台</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="profile-btn" id="openMyProfile" title="我的资料" aria-label="打开我的资料">
+          <span class="profile-btn-label">资料</span>
+          <span class="profile-btn-status" id="myProfileHeaderStatus">0%</span>
+        </button>
+        <button class="history-btn" id="openHistory" title="历史记录" aria-label="打开历史记录">历史</button>
+        <button class="settings-btn" id="openSettings" title="设置" aria-label="打开设置">设置</button>
+        <button class="theme-toggle" id="themeToggle" title="切换到浅色主题" aria-label="切换到浅色主题">浅色</button>
+      </div>
+      <div class="ip-info-wrapper">
+        <span class="ip-info-label">当前位置</span>
+        <div class="ip-info" id="ipInfo">
+          <span class="loading">获取位置中...</span>
+        </div>
+        <button class="ip-refresh-btn" id="ipRefresh" title="重新检测 IP" aria-label="重新检测 IP">↻</button>
+      </div>
+    </header>
+
+    <footer class="actions" aria-label="主要操作">
+      <button class="btn btn-icon" id="copyAll" title="复制全部" aria-label="复制全部">⧉</button>
+      <!-- 地址 API 开关 -->
+      <label class="ai-toggle" id="addressApiToggleWrapper" title="切换地址 API（获取真实地址）">
+        <input type="checkbox" id="useAddressApiToggle" checked>
+        <span class="ai-toggle-label">地图<span class="ai-toggle-state" aria-hidden="true">开</span></span>
+      </label>
+      <label class="ai-toggle" id="fillEmptyOnlyWrapper" title="只填写空白字段，保留页面已有内容" aria-label="只填写空白字段">
+        <input type="checkbox" id="fillEmptyOnlyToggle">
+        <span class="ai-toggle-label">空白<span class="ai-toggle-state" aria-hidden="true">关</span></span>
+      </label>
+      <!-- AI 模式开关 -->
+      <label class="ai-toggle is-hidden" id="aiToggleWrapper" title="切换 AI 模式">
+        <input type="checkbox" id="useAIToggle">
+        <span class="ai-toggle-label">AI<span class="ai-toggle-state" aria-hidden="true">关</span></span>
+      </label>
+      <button class="btn btn-secondary" id="regenerateAll">↻ 重新生成</button>
+      <button class="btn btn-primary" id="fillForm">填写表单</button>
+    </footer>
+
+    <section class="workflow-guide" id="workflowGuide" data-state="compact" aria-label="安全填表工作流">
+      <div class="workflow-guide-main">
+        <div class="workflow-guide-copy">
+          <span class="workflow-guide-kicker">推荐流程</span>
+          <strong>先看计划，再填表</strong>
+          <span>扫描只读可见字段；敏感字段保持跳过或手动复制。</span>
+        </div>
+        <button class="workflow-guide-toggle" id="workflowGuideToggle" type="button" aria-expanded="false" aria-controls="workflowGuideDetails" title="展开安全填表流程">展开</button>
+      </div>
+      <div class="workflow-guide-steps" aria-label="工作流步骤">
+        <span data-step="prepare">1 准备资料</span>
+        <span data-step="scan">2 扫描页面</span>
+        <span data-step="fill">3 确认后填表</span>
+      </div>
+      <div class="workflow-guide-details" id="workflowGuideDetails" hidden>
+        <div><strong>准备</strong><span>检查当前资料、锁定要保留的字段。</span></div>
+        <div><strong>扫描</strong><span>读取当前标签页可见表单，预览命中与跳过项。</span></div>
+        <div><strong>填写</strong><span>确认计划后再触发 Fill，页面内容只在你操作时改变。</span></div>
+      </div>
+    </section>
+
+    <section class="shortcut-hint" id="shortcutHint" aria-label="快捷键填表提示">
+      <div class="shortcut-hint-main">
+        <span class="shortcut-hint-kicker">快捷填表</span>
+        <strong>键盘也走安全边界</strong>
+        <span class="shortcut-hint-detail" id="shortcutHintDetail">与 Fill 使用同一安全边界：公开资料，空白优先。</span>
+      </div>
+      <span class="shortcut-hint-key" id="shortcutHintKey" title="默认快捷键">Ctrl+Shift+F</span>
+    </section>
+
+    <section class="fill-readiness" id="fillReadiness" data-state="checking" aria-label="填表准备度" aria-live="polite">
+      <div class="fill-readiness-head">
+        <div class="fill-readiness-copy">
+          <span class="fill-readiness-kicker">填表准备度</span>
+          <strong id="fillReadinessTitle">正在整理状态</strong>
+        </div>
+        <span class="fill-readiness-score" id="fillReadinessScore" aria-label="准备度 0%">0%</span>
+      </div>
+      <div class="fill-readiness-track" aria-hidden="true">
+        <span id="fillReadinessBar"></span>
+      </div>
+      <div class="fill-readiness-grid" aria-label="准备度明细">
+        <span id="fillReadyProfile" data-state="waiting">资料 0/13</span>
+        <span id="fillReadyPage" data-state="idle">页面 未扫描</span>
+        <span id="fillReadyMode" data-state="standard">模式 标准</span>
+        <span id="fillReadyAI" data-state="off">AI 关闭</span>
+        <span id="fillReadyAddress" data-state="local">地址 本地</span>
+        <span id="fillReadySavedProfile" data-state="partial">本地资料 0%</span>
+      </div>
+      <p class="fill-readiness-hint" id="fillReadinessHint">生成资料后先扫描当前页面，再填写更稳。</p>
+    </section>
+
+    <section class="page-scan-panel" id="pageScanPanel" data-state="idle" aria-label="当前页面扫描预览" aria-live="polite">
+      <div class="page-scan-copy">
+        <span class="page-scan-kicker">页面扫描</span>
+        <strong id="pageScanTitle">填表前先看页面结构</strong>
+        <span id="pageScanDetail">只读取当前标签页的可见表单字段，不填写、不保存。</span>
+        <div class="page-scan-meta" id="pageScanMeta" aria-label="页面扫描摘要" hidden>
+          <span id="pageScanMatchChip" data-state="neutral">命中 -</span>
+          <span id="pageScanRequiredChip" data-state="neutral">必填 -</span>
+          <span id="pageScanSensitiveChip" data-state="neutral">敏感 0</span>
+        </div>
+        <div class="page-scan-plan" id="pageScanPlan" aria-label="扫描计划" hidden>
+          <div class="page-scan-plan-title" id="pageScanPlanTitle">扫描后显示预计填表计划</div>
+          <div class="page-scan-plan-grid">
+            <div class="page-scan-plan-list" id="pageScanPlanMatched" aria-label="预计填写字段"></div>
+            <div class="page-scan-plan-list" id="pageScanPlanUnmatched" aria-label="仍需确认字段"></div>
+            <div class="page-scan-plan-list" id="pageScanPlanSensitive" aria-label="安全跳过字段"></div>
+          </div>
+        </div>
+      </div>
+      <button class="page-scan-btn" id="scanCurrentPage" type="button" title="扫描当前页表单" aria-label="扫描当前页表单">扫描</button>
+    </section>
+
+    <section class="last-fill-result" id="lastFillResult" data-state="empty" aria-label="上次填表结果" aria-live="polite" hidden>
+      <div class="last-fill-result-copy">
+        <span class="last-fill-result-kicker">上次填表</span>
+        <strong id="lastFillResultTitle">暂无填表结果</strong>
+        <span id="lastFillResultDetail">填表后显示命中、跳过和未命中字段。</span>
+      </div>
+      <div class="last-fill-result-metrics" aria-label="填表结果统计">
+        <span id="lastFillFilled" data-state="ready">填 0</span>
+        <span id="lastFillSkipped" data-state="neutral">跳过 0</span>
+        <span id="lastFillMissed" data-state="neutral">未命中 0</span>
+      </div>
+    </section>
+
+    <section class="profile-overview" id="profileOverview" aria-label="当前生成资料概览" aria-live="polite">
+      <div class="profile-overview-main">
+        <span class="profile-overview-kicker">当前资料</span>
+        <strong id="profileOverviewScore">0/13</strong>
+        <div class="profile-overview-track" aria-hidden="true">
+          <span id="profileOverviewBar"></span>
+        </div>
+      </div>
+      <div class="profile-overview-identity" aria-label="当前资料摘要">
+        <strong id="profileOverviewName">等待生成</strong>
+        <span id="profileOverviewDetail">资料生成后显示摘要</span>
+      </div>
+      <div class="profile-overview-meta">
+        <span id="profileOverviewMissing">等待生成</span>
+        <span id="profileOverviewLocked">锁定 0</span>
+        <span id="profileOverviewSource">来源 本地</span>
+      </div>
+      <div class="profile-overview-gap is-hidden" id="profileOverviewGap" aria-live="polite"></div>
+    </section>
+
+    <section class="form-section">
+      <section class="field-section" data-profile-section="identity">
+      <div class="section-title">
+        <button class="section-toggle" id="identitySectionToggle" data-section-toggle data-expanded-title="折叠身份资料" data-collapsed-title="展开身份资料" type="button" aria-expanded="true" aria-controls="identitySectionBody" title="折叠身份资料">
+          <span class="section-chevron" aria-hidden="true">⌄</span>
+          <span>身份</span>
+        </button>
+        <small>姓名与基础资料</small>
+        <div class="section-actions">
+          <span class="section-completion" id="identitySectionCompletion" data-section-completion="identity" data-section-label="身份资料" aria-label="身份资料完成度">0/4</span>
+          <button class="section-copy-btn" data-copy-section="identity" type="button" title="复制姓名与基础资料" aria-label="复制姓名与基础资料">复制</button>
+        </div>
+      </div>
+      <div class="section-body" id="identitySectionBody" role="region" aria-labelledby="identitySectionToggle">
+      <div class="field-group">
+        <label for="firstName">名</label>
+        <div class="input-wrapper">
+          <input type="text" id="firstName" placeholder="First Name">
+          <button class="lock-btn" data-field="firstName" title="锁定字段" aria-label="锁定字段" aria-pressed="false">□</button>
+          <button class="copy-btn" data-field="firstName" title="复制字段" aria-label="复制字段">⧉</button>
+          <button class="refresh-btn" data-field="firstName" title="重新生成字段" aria-label="重新生成字段">↻</button>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="lastName">姓</label>
+        <div class="input-wrapper">
+          <input type="text" id="lastName" placeholder="Last Name">
+          <button class="lock-btn" data-field="lastName" title="锁定字段" aria-label="锁定字段" aria-pressed="false">□</button>
+          <button class="copy-btn" data-field="lastName" title="复制字段" aria-label="复制字段">⧉</button>
+          <button class="refresh-btn" data-field="lastName" title="重新生成字段" aria-label="重新生成字段">↻</button>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="gender">性别</label>
+        <div class="input-wrapper">
+          <select id="gender">
+            <option value="male">男 (Male)</option>
+            <option value="female">女 (Female)</option>
+          </select>
+          <button class="lock-btn" data-field="gender" title="锁定字段" aria-label="锁定字段" aria-pressed="false">□</button>
+          <button class="refresh-btn" data-field="gender" title="重新生成字段" aria-label="重新生成字段">↻</button>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="birthday">生日</label>
+        <div class="input-wrapper">
+          <input type="text" id="birthday" placeholder="1990-01-01">
+          <button class="lock-btn" data-field="birthday" title="锁定字段" aria-label="锁定字段" aria-pressed="false">□</button>
+          <button class="copy-btn" data-field="birthday" title="复制字段" aria-label="复制字段">⧉</button>
+          <button class="refresh-btn" data-field="birthday" title="重新生成字段" aria-label="重新生成字段">↻</button>
+        </div>
+      </div>
+      </div>
+      </section>
+
+      <section class="field-section" data-profile-section="account">
+      <div class="section-title">
+        <button class="section-toggle" id="accountSectionToggle" data-section-toggle data-expanded-title="折叠账号资料" data-collapsed-title="展开账号资料" type="button" aria-expanded="true" aria-controls="accountSectionBody" title="折叠账号资料">
+          <span class="section-chevron" aria-hidden="true">⌄</span>
+          <span>账号</span>
+        </button>
+        <small>账号、邮箱和密码</small>
+        <div class="section-actions">
+          <span class="section-completion" id="accountSectionCompletion" data-section-completion="account" data-section-label="账号资料" aria-label="账号资料完成度">0/3</span>
+          <button class="section-copy-btn" data-copy-section="account" type="button" title="复制账号资料" aria-label="复制账号资料">复制</button>
+        </div>
+      </div>
+      <div class="section-body" id="accountSectionBody" role="region" aria-labelledby="accountSectionToggle">
+
+      <div class="field-group">
+        <label for="username">用户名</label>
+        <div class="input-wrapper">
+          <input type="text" id="username" placeholder="Username">
+          <button class="lock-btn" data-field="username" title="锁定字段" aria-label="锁定字段" aria-pressed="false">□</button>
+          <button class="copy-btn" data-field="username" title="复制字段" aria-label="复制字段">⧉</button>
+          <button class="refresh-btn" data-field="username" title="重新生成字段" aria-label="重新生成字段">↻</button>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="email">邮箱</label>
+        <div class="input-wrapper">
+          <input type="text" id="email" placeholder="Email">
+          <button class="lock-btn" data-field="email" title="锁定字段" aria-label="锁定字段" aria-pressed="false">□</button>
+          <button class="copy-btn" data-field="email" title="复制字段" aria-label="复制字段">⧉</button>
+          <button class="refresh-btn" data-field="email" title="重新生成字段" aria-label="重新生成字段">↻</button>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="emailDomainType">后缀</label>
+        <div class="input-wrapper email-domain-wrapper">
+          <select id="emailDomainType">
+            <option value="gmail.com">gmail.com</option>
+            <option value="outlook.com">outlook.com</option>
+            <option value="yahoo.com">yahoo.com</option>
+            <option value="hotmail.com">hotmail.com</option>
+            <option value="icloud.com">icloud.com</option>
+            <option value="protonmail.com">protonmail.com</option>
+            <option value="temp">临时邮箱 (Mail.tm)</option>
+            <option value="custom">自定义</option>
+          </select>
+          <input type="text" id="customDomain" class="is-hidden" placeholder="example.com">
+        </div>
+      </div>
+
+      <!-- 临时邮箱收件箱 -->
+      <div class="field-group inbox-group is-hidden" id="inboxGroup">
+        <div class="inbox-header">
+          <label>收件箱</label>
+          <button class="inbox-refresh-btn" id="refreshInbox" type="button" title="刷新收件箱" aria-label="刷新收件箱">↻</button>
+        </div>
+        <div class="inbox-list" id="inboxList">
+          <div class="inbox-empty">暂无邮件</div>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="password">密码</label>
+        <div class="input-wrapper">
+          <input type="text" id="password" placeholder="Password">
+          <button class="lock-btn" data-field="password" title="锁定字段" aria-label="锁定字段" aria-pressed="false">□</button>
+          <button class="copy-btn" data-field="password" title="复制字段" aria-label="复制字段">⧉</button>
+          <button class="refresh-btn" data-field="password" title="重新生成字段" aria-label="重新生成字段">↻</button>
+        </div>
+      </div>
+      </div>
+      </section>
+
+      <section class="field-section" data-profile-section="contact">
+      <div class="section-title">
+        <button class="section-toggle" id="contactSectionToggle" data-section-toggle data-expanded-title="折叠联系资料" data-collapsed-title="展开联系资料" type="button" aria-expanded="true" aria-controls="contactSectionBody" title="折叠联系资料">
+          <span class="section-chevron" aria-hidden="true">⌄</span>
+          <span>联系</span>
+        </button>
+        <small>电话与地址</small>
+        <div class="section-actions">
+          <span class="section-completion" id="contactSectionCompletion" data-section-completion="contact" data-section-label="联系资料" aria-label="联系资料完成度">0/6</span>
+          <button class="section-copy-btn" data-copy-section="contact" type="button" title="复制电话与地址" aria-label="复制电话与地址">复制</button>
+          <button class="section-copy-btn" id="copyMailingAddress" type="button" title="复制邮寄格式地址" aria-label="复制邮寄格式地址">邮寄</button>
+        </div>
+      </div>
+      <div class="section-body" id="contactSectionBody" role="region" aria-labelledby="contactSectionToggle">
+
+      <div class="field-group">
+        <label for="phone">电话</label>
+        <div class="input-wrapper">
+          <input type="text" id="phone" placeholder="Phone">
+          <button class="lock-btn" data-field="phone" title="锁定字段" aria-label="锁定字段" aria-pressed="false">□</button>
+          <button class="copy-btn" data-field="phone" title="复制字段" aria-label="复制字段">⧉</button>
+          <button class="refresh-btn" data-field="phone" title="重新生成字段" aria-label="重新生成字段">↻</button>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="address">地址</label>
+        <div class="input-wrapper">
+          <input type="text" id="address" placeholder="Address">
+          <button class="lock-btn" data-field="address" title="锁定字段" aria-label="锁定字段" aria-pressed="false">□</button>
+          <button class="copy-btn" data-field="address" title="复制字段" aria-label="复制字段">⧉</button>
+          <button class="refresh-btn" data-field="address" title="重新生成字段" aria-label="重新生成字段">↻</button>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="city">城市</label>
+        <div class="input-wrapper">
+          <input type="text" id="city" placeholder="City">
+          <button class="lock-btn" data-field="city" title="锁定字段" aria-label="锁定字段" aria-pressed="false">□</button>
+          <button class="copy-btn" data-field="city" title="复制字段" aria-label="复制字段">⧉</button>
+          <button class="refresh-btn" data-field="city" title="重新生成字段" aria-label="重新生成字段">↻</button>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="state">州/省</label>
+        <div class="input-wrapper">
+          <input type="text" id="state" placeholder="State">
+          <button class="lock-btn" data-field="state" title="锁定字段" aria-label="锁定字段" aria-pressed="false">□</button>
+          <button class="copy-btn" data-field="state" title="复制字段" aria-label="复制字段">⧉</button>
+          <button class="refresh-btn" data-field="state" title="重新生成字段" aria-label="重新生成字段">↻</button>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="zipCode">邮编</label>
+        <div class="input-wrapper">
+          <input type="text" id="zipCode" placeholder="Zip Code">
+          <button class="lock-btn" data-field="zipCode" title="锁定字段" aria-label="锁定字段" aria-pressed="false">□</button>
+          <button class="copy-btn" data-field="zipCode" title="复制字段" aria-label="复制字段">⧉</button>
+          <button class="refresh-btn" data-field="zipCode" title="重新生成字段" aria-label="重新生成字段">↻</button>
+        </div>
+      </div>
+
+      <div class="field-group">
+        <label for="country">国家</label>
+        <div class="input-wrapper">
+          <select id="country" aria-describedby="countryScopeNote">
+            <option value="United States">United States</option>
+            <option value="United Kingdom">United Kingdom</option>
+            <option value="Canada">Canada</option>
+            <option value="Australia">Australia</option>
+            <option value="China">China</option>
+            <option value="Japan">Japan</option>
+            <option value="South Korea">South Korea</option>
+            <option value="Germany">Germany</option>
+            <option value="France">France</option>
+            <option value="Russia">Russia</option>
+            <option value="Spain">Spain</option>
+            <option value="Italy">Italy</option>
+            <option value="Brazil">Brazil</option>
+            <option value="India">India</option>
+            <option value="Singapore">Singapore</option>
+            <option value="Taiwan">Taiwan</option>
+            <option value="Hong Kong">Hong Kong</option>
+            <option value="Mexico">Mexico</option>
+            <option value="Netherlands">Netherlands</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-note country-scope-note" id="countryScopeNote">
+        支持 19 个国家/地区生成资料；城市级定点生成目前仅限美国。
+      </div>
+      <details class="country-coverage" id="countryCoverage">
+        <summary>查看支持的国家/地区</summary>
+        <div class="country-coverage-grid" id="countryCoverageList" aria-label="支持生成资料的国家和地区">
+          <span data-country="United States">United States</span>
+          <span data-country="United Kingdom">United Kingdom</span>
+          <span data-country="Canada">Canada</span>
+          <span data-country="Australia">Australia</span>
+          <span data-country="China">China</span>
+          <span data-country="Japan">Japan</span>
+          <span data-country="South Korea">South Korea</span>
+          <span data-country="Germany">Germany</span>
+          <span data-country="France">France</span>
+          <span data-country="Russia">Russia</span>
+          <span data-country="Spain">Spain</span>
+          <span data-country="Italy">Italy</span>
+          <span data-country="Brazil">Brazil</span>
+          <span data-country="India">India</span>
+          <span data-country="Singapore">Singapore</span>
+          <span data-country="Taiwan">Taiwan</span>
+          <span data-country="Hong Kong">Hong Kong</span>
+          <span data-country="Mexico">Mexico</span>
+          <span data-country="Netherlands">Netherlands</span>
+        </div>
+      </details>
+      </div>
+      </section>
+
+      <section class="field-section" data-profile-section="source">
+      <div class="section-title">
+        <button class="section-toggle" id="sourceSectionToggle" data-section-toggle data-expanded-title="折叠来源设置" data-collapsed-title="展开来源设置" type="button" aria-expanded="true" aria-controls="sourceSectionBody" title="折叠来源设置">
+          <span class="section-chevron" aria-hidden="true">⌄</span>
+          <span>来源</span>
+        </button>
+        <small>美国定点地址</small>
+      </div>
+      <div class="section-body" id="sourceSectionBody" role="region" aria-labelledby="sourceSectionToggle">
+
+      <div class="field-group location-source-group">
+        <label for="targetLocation">美国位置</label>
+        <div class="input-wrapper location-wrapper">
+          <input type="text" id="targetLocation" list="usLocationSuggestions" placeholder="州/城市，如 California 或 Seattle" aria-describedby="usLocationHint">
+          <button class="location-generate-btn" id="generateByLocation" title="按美国州或城市生成地址" aria-label="按美国州或城市生成地址">生成</button>
+          <datalist id="usLocationSuggestions">
+            <option value="California"></option>
+            <option value="New York"></option>
+            <option value="Texas"></option>
+            <option value="Florida"></option>
+            <option value="Washington"></option>
+            <option value="Oregon"></option>
+            <option value="Delaware"></option>
+            <option value="Los Angeles"></option>
+            <option value="San Francisco"></option>
+            <option value="Seattle"></option>
+            <option value="Houston"></option>
+            <option value="Miami"></option>
+            <option value="Chicago"></option>
+          </datalist>
+        </div>
+      </div>
+      <div class="field-note location-scope-note" id="usLocationHint">
+        这里接入 meiguodizhi.com，只接受美国州名或城市名；其它国家请用上方国家选择。
+      </div>
+      <div class="field-note address-service-state" id="addressServiceState" data-state="idle" role="status" aria-live="polite">
+        <strong>地址增强待命</strong>
+        <span>地图开启时优先尝试 Geoapify 或 OSM；不可用时继续使用本地地址。</span>
+      </div>
+      </div>
+      </section>
+
+      <section class="sensitive-section collapsed" id="sensitiveSection">
+        <div class="sensitive-header">
+          <span>外部资料</span>
+          <small>仅展示，不自动填表</small>
+          <button class="sensitive-toggle" id="toggleSensitive" type="button" aria-expanded="false" aria-controls="sensitiveGrid">展开</button>
+        </div>
+        <div class="sensitive-grid" id="sensitiveGrid" hidden>
+          <div class="sensitive-item">
+            <span>卡类型</span>
+            <button class="sensitive-copy" data-sensitive-field="creditCardType" title="复制卡类型" aria-label="复制卡类型">⧉</button>
+            <input type="text" id="creditCardType" readonly>
+          </div>
+          <div class="sensitive-item">
+            <span>卡号</span>
+            <button class="sensitive-copy" data-sensitive-field="creditCardNumber" title="复制卡号" aria-label="复制卡号">⧉</button>
+            <input type="text" id="creditCardNumber" readonly>
+          </div>
+          <div class="sensitive-item sensitive-compact">
+            <span>有效期</span>
+            <button class="sensitive-copy" data-sensitive-field="creditCardExpires" title="复制有效期" aria-label="复制有效期">⧉</button>
+            <input type="text" id="creditCardExpires" readonly>
+          </div>
+          <div class="sensitive-item sensitive-compact">
+            <span>CVV</span>
+            <button class="sensitive-copy" data-sensitive-field="creditCardCvv" title="复制CVV" aria-label="复制CVV">⧉</button>
+            <input type="text" id="creditCardCvv" readonly>
+          </div>
+          <div class="sensitive-item">
+            <span>SSN</span>
+            <button class="sensitive-copy" data-sensitive-field="ssn" title="复制SSN" aria-label="复制SSN">⧉</button>
+            <input type="text" id="ssn" readonly>
+          </div>
+          <div class="sensitive-item">
+            <span>收入</span>
+            <button class="sensitive-copy" data-sensitive-field="monthlySalary" title="复制收入" aria-label="复制收入">⧉</button>
+            <input type="text" id="monthlySalary" readonly>
+          </div>
+          <div class="sensitive-item">
+            <span>职业状态</span>
+            <button class="sensitive-copy" data-sensitive-field="employmentStatus" title="复制职业状态" aria-label="复制职业状态">⧉</button>
+            <input type="text" id="employmentStatus" readonly>
+          </div>
+          <div class="sensitive-item">
+            <span>公司</span>
+            <button class="sensitive-copy" data-sensitive-field="companyName" title="复制公司" aria-label="复制公司">⧉</button>
+            <input type="text" id="companyName" readonly>
+          </div>
+        </div>
+      </section>
+    </section>
+
+  </div>
+
+  <!-- 设置模态框 -->
+  <div class="modal-overlay" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle" aria-hidden="true">
+    <div class="modal" tabindex="-1">
+      <div class="modal-header">
+        <h2 id="settingsTitle">设置</h2>
+        <button class="modal-close" id="closeSettings" aria-label="关闭设置">×</button>
+      </div>
+      <div class="modal-body settings-body">
+        <section class="settings-overview" id="settingsOverview" aria-label="设置概览">
+          <div class="settings-overview-card" data-settings-overview="password" data-state="neutral">
+            <span>密码规则</span>
+            <strong>12 位</strong>
+            <small>复杂度待同步</small>
+          </div>
+          <div class="settings-overview-card" data-settings-overview="ai" data-state="off">
+            <span>AI 辅助</span>
+            <strong>未启用</strong>
+            <small>需要 API Key</small>
+          </div>
+          <div class="settings-overview-card" data-settings-overview="address" data-state="off">
+            <span>地址增强</span>
+            <strong>本地</strong>
+            <small>Geoapify 未配置</small>
+          </div>
+          <div class="settings-overview-card" data-settings-overview="archive" data-state="empty">
+            <span>配置存档</span>
+            <strong>0 个</strong>
+            <small>暂无存档</small>
+          </div>
+        </section>
+        <!-- 密码设置 -->
+        <div class="settings-section">
+          <h3>密码生成</h3>
+          <div class="setting-row">
+            <label for="passwordLength">长度</label>
+            <input type="number" id="passwordLength" min="8" max="32" value="12">
+          </div>
+          <div class="setting-row">
+            <label>复杂度</label>
+            <div class="checkbox-group">
+              <label><input type="checkbox" id="pwdUppercase" checked> 大写</label>
+              <label><input type="checkbox" id="pwdLowercase" checked> 小写</label>
+              <label><input type="checkbox" id="pwdNumbers" checked> 数字</label>
+              <label><input type="checkbox" id="pwdSymbols" checked> 符号</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- 年龄设置 -->
+        <div class="settings-section">
+          <h3>生日年龄范围</h3>
+          <div class="setting-row">
+            <label for="minAge">最小年龄</label>
+            <input type="number" id="minAge" min="1" max="100" value="18">
+          </div>
+          <div class="setting-row">
+            <label for="maxAge">最大年龄</label>
+            <input type="number" id="maxAge" min="1" max="100" value="55">
+          </div>
+        </div>
+
+        <!-- 隐私设置 -->
+        <div class="settings-section">
+          <h3>隐私</h3>
+          <div class="setting-row">
+            <label for="autoClearData">关闭浏览器后清除数据</label>
+            <input type="checkbox" id="autoClearData">
+          </div>
+        </div>
+
+        <!-- AI 设置 -->
+        <div class="settings-section">
+          <h3>AI 设置</h3>
+          <div class="setting-row">
+            <label for="enableAI">启用 AI 功能</label>
+            <input type="checkbox" id="enableAI">
+          </div>
+          <div class="setting-row">
+            <label for="openaiBaseUrl" class="setting-label-auto">API 地址</label>
+            <input type="text" id="openaiBaseUrl" placeholder="https://api.openai.com/v1"
+              class="setting-control-fill">
+          </div>
+          <div class="setting-row">
+            <label for="openaiKey" class="setting-label-auto">API Key</label>
+            <div class="setting-inline-control">
+              <input type="password" id="openaiKey" placeholder="sk-...">
+              <button class="btn-small key-visibility-btn" id="toggleOpenAIKeyVisibility" type="button" aria-pressed="false" aria-label="显示 API Key" title="显示 API Key">显示</button>
+              <button class="btn-small test-ai-btn" id="testAI" type="button" title="测试 AI 连接" aria-label="测试 AI 连接">测试</button>
+            </div>
+          </div>
+          <div class="setting-row">
+            <label for="openaiModel" class="setting-label-auto">模型</label>
+            <input type="text" id="openaiModel" placeholder="gpt-3.5-turbo" value="gpt-3.5-turbo"
+              class="setting-control-fill">
+          </div>
+          <div class="setting-row setting-row-start">
+            <label for="aiPersona" class="setting-label-auto setting-label-top">人设</label>
+            <textarea id="aiPersona" placeholder="例如：一名30岁的日本软件工程师，喜欢摄影，住在东京..."
+              class="input-full setting-control-fill persona-input"></textarea>
+          </div>
+        </div>
+
+        <!-- 地址 API 设置 -->
+        <div class="settings-section">
+          <h3>地址 API（可选）</h3>
+          <p class="setting-hint">配置后可生成真实有效的地址，免费 3000次/天</p>
+          <div class="setting-row">
+            <label for="geoapifyKey" class="setting-label-auto">Geoapify API Key</label>
+            <input type="text" id="geoapifyKey" placeholder="your-api-key" class="setting-control-fill">
+          </div>
+        </div>
+
+        <!-- 存档管理 -->
+        <div class="settings-section">
+          <h3>配置存档</h3>
+          <div class="archive-controls">
+            <input type="text" id="archiveName" placeholder="存档名称">
+            <button class="btn btn-small" id="saveArchive">保存</button>
+          </div>
+          <div class="archive-toolbar" aria-label="存档筛选">
+            <div class="archive-search-wrap">
+              <label for="archiveSearch">搜索存档</label>
+              <input type="search" id="archiveSearch" placeholder="名称、邮箱、城市或国家" autocomplete="off">
+            </div>
+            <div class="archive-info" id="archiveInfo" aria-live="polite">暂无存档</div>
+          </div>
+          <div class="archive-list" id="archiveList">
+            <!-- 动态生成存档列表 -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 历史记录模态框 -->
+  <div class="modal-overlay" id="historyModal" role="dialog" aria-modal="true" aria-labelledby="historyTitle" aria-hidden="true">
+    <div class="modal" tabindex="-1">
+      <div class="modal-header">
+        <h2 id="historyTitle">历史记录</h2>
+        <button class="modal-close" id="closeHistory" aria-label="关闭历史记录">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="history-toolbar" aria-label="历史记录筛选">
+          <div class="history-search-wrap">
+            <label for="historySearch">搜索历史</label>
+            <input type="search" id="historySearch" placeholder="姓名、邮箱、地区或填表结果" autocomplete="off">
+          </div>
+          <div class="history-info" id="historyInfo" aria-live="polite">最近使用的 10 组数据</div>
+        </div>
+        <div class="history-list" id="historyList">
+          <div class="history-empty">暂无历史记录</div>
+        </div>
+        <div class="history-actions">
+          <button class="btn btn-small btn-danger" id="clearHistory" type="button" aria-pressed="false" aria-label="清空历史记录" title="清空历史记录">清空历史</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 我的资料模态框 -->
+  <div class="modal-overlay" id="myProfileModal" role="dialog" aria-modal="true" aria-labelledby="myProfileTitle" aria-hidden="true">
+    <div class="modal profile-modal" tabindex="-1">
+      <div class="modal-header">
+        <div class="modal-title-block">
+          <h2 id="myProfileTitle">我的资料</h2>
+          <span class="profile-save-status" id="myProfileStatus" role="status" aria-live="polite" data-state="saved">本地已保存</span>
+        </div>
+        <button class="modal-close" id="closeMyProfile" aria-label="关闭我的资料">×</button>
+      </div>
+      <div class="modal-body profile-body">
+        <div class="profile-completeness" id="myProfileCompleteness" aria-live="polite">
+          <div class="profile-completeness-head">
+            <div>
+              <span class="profile-kicker">本地资料完整度</span>
+              <strong id="myProfileCompletenessScore">0%</strong>
+            </div>
+            <p id="myProfileCompletenessHint">补齐联系人和地址后，填表会更稳。</p>
+          </div>
+          <div class="profile-progress" aria-hidden="true">
+            <span id="myProfileCompletenessBar"></span>
+          </div>
+          <div class="profile-completeness-chips" id="myProfileCompletenessChips"></div>
+        </div>
+
+        <div class="profile-section">
+          <h3>联系人</h3>
+          <div class="profile-grid two-cols">
+            <label>名<input type="text" id="profileFirstName" autocomplete="given-name"></label>
+            <label>姓<input type="text" id="profileLastName" autocomplete="family-name"></label>
+            <label>邮箱<input type="email" id="profileEmail" autocomplete="email"></label>
+            <label>电话<input type="tel" id="profilePhone" autocomplete="tel"></label>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <h3>收货地址</h3>
+          <div class="profile-grid">
+            <label class="full-row">地址<input type="text" id="shippingAddress" autocomplete="shipping street-address"></label>
+            <label>城市<input type="text" id="shippingCity" autocomplete="shipping address-level2"></label>
+            <label>州/省<input type="text" id="shippingState" autocomplete="shipping address-level1"></label>
+            <label>邮编<input type="text" id="shippingZipCode" autocomplete="shipping postal-code"></label>
+            <label>国家<input type="text" id="shippingCountry" autocomplete="shipping country-name"></label>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <div class="profile-section-heading">
+            <h3>账单地址</h3>
+            <button class="profile-copy-address" id="copyShippingToBilling" type="button" aria-disabled="true" title="先填写收货地址" disabled>同收货地址</button>
+          </div>
+          <div class="profile-grid">
+            <label class="full-row">地址<input type="text" id="billingAddress" autocomplete="billing street-address"></label>
+            <label>城市<input type="text" id="billingCity" autocomplete="billing address-level2"></label>
+            <label>州/省<input type="text" id="billingState" autocomplete="billing address-level1"></label>
+            <label>邮编<input type="text" id="billingZipCode" autocomplete="billing postal-code"></label>
+            <label>国家<input type="text" id="billingCountry" autocomplete="billing country-name"></label>
+          </div>
+        </div>
+
+        <div class="profile-section">
+          <h3>支付摘要</h3>
+          <p class="profile-note" id="paymentSummaryHint">只保存发卡行、卡组织、尾号、有效期和账单备注；粘贴卡号时会只保留尾号，不保存完整卡号、CVV 或 SSN。</p>
+          <div class="profile-grid two-cols">
+            <label>发卡行<input type="text" id="cardIssuer" placeholder="Chase / CMB"></label>
+            <label>卡组织<input type="text" id="cardNetwork" placeholder="Visa / Mastercard"></label>
+            <label>尾号<input type="text" id="cardLast4" maxlength="4" inputmode="numeric" autocomplete="off" aria-describedby="paymentSummaryHint"></label>
+            <label>有效期<input type="text" id="cardExpiry" maxlength="5" inputmode="numeric" autocomplete="off" placeholder="MM/YY" aria-describedby="paymentSummaryHint"></label>
+            <label class="full-row">账单备注<textarea id="billingNote" rows="2"></textarea></label>
+          </div>
+        </div>
+
+      </div>
+      <div class="profile-actions" aria-label="我的资料操作">
+        <div class="profile-actions-row" aria-label="资料管理操作">
+          <button class="btn btn-secondary profile-action-muted" id="importMyProfile" type="button">导入</button>
+          <button class="btn btn-secondary profile-action-muted" id="exportMyProfile" type="button">导出</button>
+          <button class="btn btn-secondary profile-action-muted" id="copyMyProfile" type="button">复制</button>
+          <button class="btn btn-secondary profile-action-save" id="saveMyProfile" type="button">保存</button>
+          <button class="btn btn-secondary profile-action-danger" id="clearMyProfile" type="button" aria-pressed="false" aria-label="清空我的资料" title="清空我的资料">清空</button>
+        </div>
+        <button class="btn btn-primary" id="fillMyProfile">用我的资料填表</button>
+        <input type="file" id="myProfileImportFile" class="is-hidden" accept="application/json,.json">
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- 核心生成器 -->
+  <script src="../scripts/generators.js"></script>
+  <script src="../scripts/japan-generators.js"></script>
+
+  <!-- 模块文件（按依赖顺序加载） -->
+  <script src="js/constants.js"></script>
+  <script src="js/storage-migration.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/ai.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/mail.js"></script>
+  <script src="js/history.js"></script>
+  <script src="js/archive.js"></script>
+  <script src="js/form-fill.js"></script>
+  <script src="js/events.js"></script>
+
+  <!-- 主入口 -->
+  <script src="popup.js"></script>
+</body>
+
+</html>

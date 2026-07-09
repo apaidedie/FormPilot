@@ -1,0 +1,900 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FormPilot Form Fixture</title>
+  <link rel="icon" href="../../icons/icon16.png" type="image/png">
+  <style>
+    :root {
+      --bg: #f7f8fb;
+      --panel: #ffffff;
+      --ink: #17202a;
+      --muted: #5f6b7a;
+      --line: #d9e0ea;
+      --field: #f9fbfd;
+      --teal: #087f7b;
+      --teal-strong: #075f5d;
+      --amber: #b7791f;
+      --danger: #b42318;
+      --success: #147a4f;
+      --shadow: 0 18px 50px rgba(31, 41, 55, 0.1);
+      --radius: 8px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    button,
+    input,
+    select,
+    textarea {
+      font: inherit;
+    }
+
+    button:focus-visible,
+    input:focus-visible,
+    select:focus-visible,
+    textarea:focus-visible {
+      outline: 3px solid rgba(8, 127, 123, 0.22);
+      outline-offset: 2px;
+      border-color: var(--teal);
+    }
+
+    .shell {
+      width: min(1120px, calc(100vw - 32px));
+      margin: 0 auto;
+      padding: 30px 0 42px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 16px;
+      align-items: end;
+      margin-bottom: 18px;
+    }
+
+    h1,
+    h2 {
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: 28px;
+      line-height: 1.15;
+    }
+
+    .lede {
+      margin: 8px 0 0;
+      max-width: 650px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 0 14px;
+      background: var(--panel);
+      color: var(--ink);
+      cursor: pointer;
+      font-weight: 700;
+      transition: background 160ms ease, border-color 160ms ease, color 160ms ease, transform 160ms ease;
+    }
+
+    .button:hover {
+      border-color: rgba(8, 127, 123, 0.5);
+      transform: translateY(-1px);
+    }
+
+    .button.primary {
+      background: var(--teal);
+      border-color: var(--teal);
+      color: #fff;
+    }
+
+    .button.primary:hover {
+      background: var(--teal-strong);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 320px;
+      gap: 18px;
+      align-items: start;
+    }
+
+    form,
+    aside {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    form {
+      padding: 18px;
+    }
+
+    aside {
+      position: sticky;
+      top: 18px;
+      padding: 16px;
+    }
+
+    .section {
+      padding: 16px 0;
+      border-top: 1px solid var(--line);
+    }
+
+    .section:first-child {
+      padding-top: 0;
+      border-top: 0;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: baseline;
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      font-size: 15px;
+      line-height: 1.2;
+    }
+
+    .section-head span,
+    .hint,
+    .report-time {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .field {
+      display: grid;
+      gap: 6px;
+    }
+
+    .field.full {
+      grid-column: 1 / -1;
+    }
+
+    label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #283442;
+    }
+
+    input,
+    select,
+    textarea {
+      width: 100%;
+      min-height: 40px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--field);
+      color: var(--ink);
+      padding: 8px 10px;
+    }
+
+    textarea {
+      min-height: 76px;
+      resize: vertical;
+    }
+
+    .decoy {
+      border: 1px dashed rgba(180, 35, 24, 0.42);
+      border-radius: var(--radius);
+      padding: 12px;
+      background: #fffafa;
+    }
+
+    .decoy .section-head {
+      margin-bottom: 10px;
+    }
+
+    .status {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      border-radius: 999px;
+      padding: 0 10px;
+      background: #eef6f5;
+      color: var(--teal-strong);
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .status.fail {
+      background: #fff0ee;
+      color: var(--danger);
+    }
+
+    .status.warn {
+      background: #fff7e8;
+      color: var(--amber);
+    }
+
+    .report {
+      display: grid;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .report-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      border-top: 1px solid var(--line);
+      padding-top: 10px;
+      font-size: 13px;
+    }
+
+    .report-row:first-child {
+      border-top: 0;
+      padding-top: 0;
+    }
+
+    .report-row strong {
+      font-weight: 800;
+    }
+
+    .report-row.pass strong {
+      color: var(--success);
+    }
+
+    .report-row.fail strong {
+      color: var(--danger);
+    }
+
+    .report-log {
+      min-height: 120px;
+      max-height: 230px;
+      overflow: auto;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 10px;
+      background: #0f1720;
+      color: #d7e5ee;
+      font: 12px/1.5 ui-monospace, SFMono-Regular, Consolas, monospace;
+      white-space: pre-wrap;
+    }
+
+    @media (max-width: 860px) {
+      header,
+      .layout {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        justify-content: flex-start;
+      }
+
+      aside {
+        position: static;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .shell {
+        width: min(100vw - 20px, 560px);
+        padding-top: 18px;
+      }
+
+      .actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+      }
+
+      .button {
+        width: 100%;
+        min-width: 0;
+        padding: 0 10px;
+      }
+
+      .grid {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 23px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main class="shell">
+    <header>
+      <div>
+        <h1>FormPilot Form Fixture</h1>
+        <p class="lede">A local checkout-style page for checking generated profile fill, My Profile fill, address-specific fields, payment summary metadata, and sensitive decoys.</p>
+      </div>
+      <div class="actions" aria-label="Fixture actions">
+        <button class="button primary" type="button" id="runFixture">Run embedded fill check</button>
+        <button class="button" type="button" id="runEmptyOnly">Run empty-only check</button>
+        <button class="button" type="button" id="auditOnly">Audit current fields</button>
+        <button class="button" type="button" id="resetFields">Reset</button>
+      </div>
+    </header>
+
+    <div class="layout">
+      <form id="fixtureForm" autocomplete="on">
+        <section class="section" aria-labelledby="identityTitle">
+          <div class="section-head">
+            <h2 id="identityTitle">Identity</h2>
+            <span>Common registration fields</span>
+          </div>
+          <div class="grid">
+            <div class="field full">
+              <label for="fullName">Full name</label>
+              <input id="fullName" name="full_name" autocomplete="name">
+            </div>
+            <div class="field">
+              <label for="firstName">First name</label>
+              <input id="firstName" name="first_name" autocomplete="given-name">
+            </div>
+            <div class="field">
+              <label for="lastName">Last name</label>
+              <input id="lastName" name="last_name" autocomplete="family-name">
+            </div>
+            <div class="field">
+              <label for="gender">Gender</label>
+              <select id="gender" name="gender" aria-label="Gender">
+                <option value="">Choose</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="birthday">Birthday</label>
+              <input id="birthday" name="birthday" autocomplete="bday" placeholder="YYYY-MM-DD">
+            </div>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="accountTitle">
+          <div class="section-head">
+            <h2 id="accountTitle">Account</h2>
+            <span>Email and password confirmation</span>
+          </div>
+          <div class="grid">
+            <div class="field">
+              <label for="username">Username</label>
+              <input id="username" name="username" autocomplete="username">
+            </div>
+            <div class="field">
+              <label for="email">Email</label>
+              <input id="email" name="email" type="email" autocomplete="email">
+            </div>
+            <div class="field">
+              <label for="password">Password</label>
+              <input id="password" name="password" type="password" autocomplete="new-password">
+            </div>
+            <div class="field">
+              <label for="confirmPassword">Confirm password</label>
+              <input id="confirmPassword" name="confirm_password" type="password" autocomplete="new-password">
+            </div>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="contactTitle">
+          <div class="section-head">
+            <h2 id="contactTitle">Contact</h2>
+            <span>Generic profile fields</span>
+          </div>
+          <div class="grid">
+            <div class="field">
+              <label for="phone">Phone</label>
+              <input id="phone" name="phone" type="tel" autocomplete="tel">
+            </div>
+            <div class="field">
+              <label for="country">Country</label>
+              <select id="country" name="country" autocomplete="country-name">
+                <option value="">Choose</option>
+                <option value="United States">United States</option>
+                <option value="Canada">Canada</option>
+                <option value="Japan">Japan</option>
+                <option value="Netherlands">Netherlands</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="shippingTitle">
+          <div class="section-head">
+            <h2 id="shippingTitle">Shipping address</h2>
+            <span>Specific shipping selectors</span>
+          </div>
+          <div class="grid">
+            <div class="field full">
+              <label for="shippingAddress">Address</label>
+              <input id="shippingAddress" name="shipping_address" autocomplete="shipping street-address">
+            </div>
+            <div class="field">
+              <label for="shippingCity">City</label>
+              <input id="shippingCity" name="shipping_city" autocomplete="shipping address-level2">
+            </div>
+            <div class="field">
+              <label for="shippingState">State</label>
+              <select id="shippingState" name="shipping_state" autocomplete="shipping address-level1">
+                <option value="">Choose</option>
+                <option value="California">California</option>
+                <option value="New York">New York</option>
+                <option value="Texas">Texas</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="shippingZipCode">Postal code</label>
+              <input id="shippingZipCode" name="shipping_zip" autocomplete="shipping postal-code">
+            </div>
+            <div class="field">
+              <label for="shippingCountry">Country</label>
+              <select id="shippingCountry" name="shipping_country" autocomplete="shipping country-name">
+                <option value="">Choose</option>
+                <option value="United States">United States</option>
+                <option value="Canada">Canada</option>
+                <option value="Japan">Japan</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="billingTitle">
+          <div class="section-head">
+            <h2 id="billingTitle">Billing address</h2>
+            <span>Specific billing selectors</span>
+          </div>
+          <div class="grid">
+            <div class="field full">
+              <label for="billingAddress">Address</label>
+              <input id="billingAddress" name="billing_address" autocomplete="billing street-address">
+            </div>
+            <div class="field">
+              <label for="billingCity">City</label>
+              <input id="billingCity" name="billing_city" autocomplete="billing address-level2">
+            </div>
+            <div class="field">
+              <label for="billingState">State</label>
+              <select id="billingState" name="billing_state" autocomplete="billing address-level1">
+                <option value="">Choose</option>
+                <option value="California">California</option>
+                <option value="New York">New York</option>
+                <option value="Texas">Texas</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="billingZipCode">Postal code</label>
+              <input id="billingZipCode" name="billing_zip" autocomplete="billing postal-code">
+            </div>
+            <div class="field">
+              <label for="billingCountry">Country</label>
+              <select id="billingCountry" name="billing_country" autocomplete="billing country-name">
+                <option value="">Choose</option>
+                <option value="United States">United States</option>
+                <option value="Canada">Canada</option>
+                <option value="Japan">Japan</option>
+              </select>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" aria-labelledby="paymentSummaryTitle">
+          <div class="section-head">
+            <h2 id="paymentSummaryTitle">Payment summary metadata</h2>
+            <span>Allowed My Profile payment fields</span>
+          </div>
+          <div class="grid">
+            <div class="field">
+              <label for="cardIssuer">Issuer</label>
+              <input id="cardIssuer" name="card_issuer">
+            </div>
+            <div class="field">
+              <label for="cardNetwork">Network</label>
+              <select id="cardNetwork" name="card_network">
+                <option value="">Choose</option>
+                <option value="Visa">Visa</option>
+                <option value="Mastercard">Mastercard</option>
+                <option value="Amex">Amex</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="cardLast4">Last four</label>
+              <input id="cardLast4" name="card_last4" inputmode="numeric" maxlength="4">
+            </div>
+            <div class="field">
+              <label for="cardExpiry">Expiry</label>
+              <input id="cardExpiry" name="card_expiry" placeholder="MM/YY">
+            </div>
+            <div class="field full">
+              <label for="billingNote">Billing note</label>
+              <textarea id="billingNote" name="billing_note"></textarea>
+            </div>
+          </div>
+        </section>
+
+        <section class="section decoy" aria-labelledby="decoyTitle">
+          <div class="section-head">
+            <h2 id="decoyTitle">Sensitive decoys</h2>
+            <span>These must stay empty</span>
+          </div>
+          <div class="grid">
+            <div class="field">
+              <label for="cardNumber">Full card number</label>
+              <input id="cardNumber" name="credit_card_number" autocomplete="off">
+            </div>
+            <div class="field">
+              <label for="cardCvv">CVV</label>
+              <input id="cardCvv" name="card_cvv" autocomplete="off">
+            </div>
+            <div class="field full">
+              <label for="ssn">SSN</label>
+              <input id="ssn" name="ssn" autocomplete="off">
+            </div>
+          </div>
+        </section>
+      </form>
+
+      <aside aria-labelledby="reportTitle">
+        <div class="section-head">
+          <h2 id="reportTitle">Fixture report</h2>
+          <span class="status" id="statusPill">Idle</span>
+        </div>
+        <p class="hint">Run the embedded check to load the current content script and fill this page with a deterministic profile.</p>
+        <div class="report" id="summaryRows" aria-live="polite"></div>
+        <p class="report-time" id="reportTime">No run yet.</p>
+        <pre class="report-log" id="reportLog" aria-live="polite">Waiting for a check.</pre>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const fixtureProfile = {
+      firstName: 'Maya',
+      lastName: 'Parker',
+      gender: 'female',
+      birthday: '1991-04-18',
+      username: 'maya.parker91',
+      email: 'maya.parker@example.com',
+      password: 'Tg7#qpL2sVn9',
+      phone: '415-555-0134',
+      country: 'United States',
+      shippingAddress: '1888 Mission Street',
+      shippingCity: 'San Francisco',
+      shippingState: 'California',
+      shippingZipCode: '94103',
+      shippingCountry: 'United States',
+      billingAddress: '50 Fremont Street',
+      billingCity: 'San Francisco',
+      billingState: 'California',
+      billingZipCode: '94105',
+      billingCountry: 'United States',
+      cardIssuer: 'Chase',
+      cardNetwork: 'Visa',
+      cardLast4: '4242',
+      cardExpiry: '08/29',
+      billingNote: 'Use the downtown billing address.'
+    };
+
+    const expectedFields = {
+      fullName: 'Maya Parker',
+      firstName: fixtureProfile.firstName,
+      lastName: fixtureProfile.lastName,
+      gender: fixtureProfile.gender,
+      birthday: fixtureProfile.birthday,
+      username: fixtureProfile.username,
+      email: fixtureProfile.email,
+      password: fixtureProfile.password,
+      confirmPassword: fixtureProfile.password,
+      phone: fixtureProfile.phone,
+      shippingAddress: fixtureProfile.shippingAddress,
+      shippingCity: fixtureProfile.shippingCity,
+      shippingState: fixtureProfile.shippingState,
+      shippingZipCode: fixtureProfile.shippingZipCode,
+      shippingCountry: fixtureProfile.shippingCountry,
+      billingAddress: fixtureProfile.billingAddress,
+      billingCity: fixtureProfile.billingCity,
+      billingState: fixtureProfile.billingState,
+      billingZipCode: fixtureProfile.billingZipCode,
+      billingCountry: fixtureProfile.billingCountry,
+      cardIssuer: fixtureProfile.cardIssuer,
+      cardNetwork: fixtureProfile.cardNetwork,
+      cardLast4: fixtureProfile.cardLast4,
+      cardExpiry: fixtureProfile.cardExpiry,
+      billingNote: fixtureProfile.billingNote
+    };
+
+    const decoyFields = ['cardNumber', 'cardCvv', 'ssn'];
+    const statusPill = document.getElementById('statusPill');
+    const reportLog = document.getElementById('reportLog');
+    const reportTime = document.getElementById('reportTime');
+    const summaryRows = document.getElementById('summaryRows');
+    const form = document.getElementById('fixtureForm');
+    const scriptPaths = [
+      '../../scripts/selectors/common.js',
+      '../../scripts/selectors/japan.js',
+      '../../scripts/content.js'
+    ];
+
+    function getFieldValue(id) {
+      const field = document.getElementById(id);
+      return field ? field.value : '';
+    }
+
+    function setStatus(kind, text) {
+      statusPill.className = `status ${kind || ''}`.trim();
+      statusPill.textContent = text;
+    }
+
+    function setReport(lines) {
+      reportLog.textContent = lines.join('\n');
+      reportTime.textContent = `Last run: ${new Date().toLocaleTimeString()}`;
+    }
+
+    function renderSummary(rows) {
+      summaryRows.innerHTML = rows.map(row => `
+        <div class="report-row ${row.pass ? 'pass' : 'fail'}">
+          <span>${row.label}</span>
+          <strong>${row.value}</strong>
+        </div>
+      `).join('');
+    }
+
+    function resetFields() {
+      form.reset();
+      setStatus('', 'Idle');
+      renderSummary([]);
+      reportTime.textContent = 'No run yet.';
+      reportLog.textContent = 'Waiting for a check.';
+    }
+
+    function auditFields(sourceResult) {
+      const mismatches = [];
+      const decoyLeaks = [];
+      let matched = 0;
+
+      Object.entries(expectedFields).forEach(([id, expected]) => {
+        const actual = getFieldValue(id);
+        if (actual === expected) {
+          matched++;
+        } else {
+          mismatches.push(`${id}: expected "${expected}" but found "${actual}"`);
+        }
+      });
+
+      decoyFields.forEach(id => {
+        const actual = getFieldValue(id);
+        if (actual) {
+          decoyLeaks.push(`${id}: should stay empty but found "${actual}"`);
+        }
+      });
+
+      const passed = mismatches.length === 0 && decoyLeaks.length === 0;
+      setStatus(passed ? '' : 'fail', passed ? 'Pass' : 'Needs work');
+      renderSummary([
+        { label: 'Expected fields', value: `${matched}/${Object.keys(expectedFields).length}`, pass: mismatches.length === 0 },
+        { label: 'Sensitive decoys', value: decoyLeaks.length === 0 ? 'Empty' : `${decoyLeaks.length} filled`, pass: decoyLeaks.length === 0 },
+        { label: 'Content response', value: sourceResult ? `${sourceResult.filledCount || 0} filled` : 'Manual audit', pass: true }
+      ]);
+
+      const lines = [];
+      if (sourceResult) {
+        lines.push(`content.js response: ${JSON.stringify(sourceResult, null, 2)}`);
+        lines.push('');
+      }
+      if (passed) {
+        lines.push('All expected fields matched. Sensitive decoys stayed empty.');
+      } else {
+        lines.push('Mismatches:');
+        lines.push(...(mismatches.length ? mismatches : ['none']));
+        lines.push('');
+        lines.push('Sensitive decoy leaks:');
+        lines.push(...(decoyLeaks.length ? decoyLeaks : ['none']));
+      }
+      setReport(lines);
+      return { passed, mismatches, decoyLeaks };
+    }
+
+    async function loadScript(path) {
+      const response = await fetch(path);
+      if (!response.ok) {
+        throw new Error(`Failed to load ${path}: ${response.status}`);
+      }
+      const source = await response.text();
+      new Function(`${source}\n//# sourceURL=${path}`)();
+    }
+
+    async function loadContentHarness() {
+      window.__formPilotFixture = window.__formPilotFixture || {};
+      window.chrome = window.chrome || {};
+      window.chrome.runtime = window.chrome.runtime || {};
+      window.chrome.runtime.onMessage = {
+        addListener(listener) {
+          window.__formPilotFixture.listener = listener;
+        }
+      };
+
+      if (window.__formPilotFixture.loaded && window.__formPilotFixture.listener) return;
+
+      for (const path of scriptPaths) {
+        await loadScript(path);
+      }
+      window.__formPilotFixture.loaded = true;
+
+      if (!window.__formPilotFixture.listener) {
+        throw new Error('Content script listener was not registered.');
+      }
+    }
+
+    async function runEmbeddedCheck() {
+      resetFields();
+      setStatus('warn', 'Running');
+      try {
+        await loadContentHarness();
+        const result = await new Promise(resolve => {
+          window.__formPilotFixture.listener(
+            { action: 'fillForm', data: fixtureProfile },
+            {},
+            response => resolve(response)
+          );
+        });
+        await new Promise(resolve => setTimeout(resolve, 80));
+        const audit = auditFields(result);
+        return { ...audit, result };
+      } catch (error) {
+        setStatus('fail', 'Failed');
+        renderSummary([{ label: 'Harness', value: 'Failed', pass: false }]);
+        setReport([error.message]);
+        return { passed: false, error: error.message };
+      }
+    }
+
+    async function runEmbeddedSmartSafetyCheck() {
+      resetFields();
+      setStatus('warn', 'Running AI safety');
+      try {
+        await loadContentHarness();
+        document.getElementById('email').value = 'keep@example.com';
+        const mapping = {
+          firstName: fixtureProfile.firstName,
+          email: '',
+          cardNumber: '4111111111111111',
+          cardCvv: '123',
+          ssn: '123-45-6789'
+        };
+        const result = await new Promise(resolve => {
+          window.__formPilotFixture.listener(
+            { action: 'fillFormSmart', data: mapping },
+            {},
+            response => resolve(response)
+          );
+        });
+
+        const decoyLeaks = decoyFields.filter(id => getFieldValue(id));
+        const emailPreserved = getFieldValue('email') === 'keep@example.com';
+        const firstNameFilled = getFieldValue('firstName') === fixtureProfile.firstName;
+        const passed = decoyLeaks.length === 0 && emailPreserved && firstNameFilled;
+        setStatus(passed ? '' : 'fail', passed ? 'Pass' : 'Needs work');
+        renderSummary([
+          { label: 'Smart fill allowed field', value: firstNameFilled ? 'Filled' : 'Missing', pass: firstNameFilled },
+          { label: 'Empty mapping', value: emailPreserved ? 'Skipped' : 'Overwrote', pass: emailPreserved },
+          { label: 'Sensitive decoys', value: decoyLeaks.length === 0 ? 'Empty' : `${decoyLeaks.length} filled`, pass: decoyLeaks.length === 0 }
+        ]);
+        setReport([
+          `content.js smart response: ${JSON.stringify(result, null, 2)}`,
+          '',
+          passed ? 'AI smart fill safety check passed.' : `AI smart fill safety issue: ${decoyLeaks.join(', ') || 'field mismatch'}`
+        ]);
+        return { passed, result, decoyLeaks };
+      } catch (error) {
+        setStatus('fail', 'Failed');
+        renderSummary([{ label: 'AI safety harness', value: 'Failed', pass: false }]);
+        setReport([error.message]);
+        return { passed: false, error: error.message };
+      }
+    }
+
+    async function runEmbeddedEmptyOnlyCheck() {
+      resetFields();
+      setStatus('warn', 'Running empty-only');
+      try {
+        await loadContentHarness();
+        document.getElementById('firstName').value = 'Existing';
+        document.getElementById('email').value = 'existing@example.com';
+        document.getElementById('shippingAddress').value = 'Do not replace';
+        document.getElementById('cardLast4').value = '9999';
+
+        const result = await new Promise(resolve => {
+          window.__formPilotFixture.listener(
+            { action: 'fillForm', data: fixtureProfile, options: { fillEmptyOnly: true } },
+            {},
+            response => resolve(response)
+          );
+        });
+
+        const preserved = [
+          getFieldValue('firstName') === 'Existing',
+          getFieldValue('email') === 'existing@example.com',
+          getFieldValue('shippingAddress') === 'Do not replace',
+          getFieldValue('cardLast4') === '9999'
+        ].every(Boolean);
+        const filledBlank = getFieldValue('lastName') === fixtureProfile.lastName &&
+          getFieldValue('billingAddress') === fixtureProfile.billingAddress;
+        const reportsSkipped = ['firstName', 'email', 'shippingAddress', 'cardLast4']
+          .every(id => result.results?.[id] === 'skipped filled');
+        const decoyLeaks = decoyFields.filter(id => getFieldValue(id));
+        const passed = preserved && filledBlank && reportsSkipped && decoyLeaks.length === 0;
+        setStatus(passed ? '' : 'fail', passed ? 'Pass' : 'Needs work');
+        renderSummary([
+          { label: 'Existing values', value: preserved ? 'Preserved' : 'Changed', pass: preserved },
+          { label: 'Blank values', value: filledBlank ? 'Filled' : 'Missing', pass: filledBlank },
+          { label: 'Content response', value: reportsSkipped ? 'Skipped filled' : 'Mismatch', pass: reportsSkipped },
+          { label: 'Sensitive decoys', value: decoyLeaks.length === 0 ? 'Empty' : `${decoyLeaks.length} filled`, pass: decoyLeaks.length === 0 }
+        ]);
+        setReport([
+          `content.js empty-only response: ${JSON.stringify(result, null, 2)}`,
+          '',
+          passed ? 'Empty-only fill check passed.' : 'Empty-only fill check found a mismatch.'
+        ]);
+        return { passed, result, decoyLeaks };
+      } catch (error) {
+        setStatus('fail', 'Failed');
+        renderSummary([{ label: 'Empty-only harness', value: 'Failed', pass: false }]);
+        setReport([error.message]);
+        return { passed: false, error: error.message };
+      }
+    }
+
+    document.getElementById('runFixture').addEventListener('click', runEmbeddedCheck);
+    document.getElementById('runEmptyOnly').addEventListener('click', runEmbeddedEmptyOnlyCheck);
+    document.getElementById('auditOnly').addEventListener('click', () => auditFields(null));
+    document.getElementById('resetFields').addEventListener('click', resetFields);
+    window.runEmbeddedCheck = runEmbeddedCheck;
+    window.runEmbeddedSmartSafetyCheck = runEmbeddedSmartSafetyCheck;
+    window.runEmbeddedEmptyOnlyCheck = runEmbeddedEmptyOnlyCheck;
+  </script>
+</body>
+
+</html>

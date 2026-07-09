@@ -1,0 +1,58 @@
+name: Feature request
+description: Suggest a focused improvement for FormPilot.
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What workflow is slow, brittle, missing, or confusing today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed solution
+      description: Describe the smallest useful version of the feature.
+    validations:
+      required: true
+  - type: textarea
+    id: roadmap
+    attributes:
+      label: Roadmap fit
+      description: Link the related area in docs/roadmap.md, or explain why the roadmap should change.
+      placeholder: This fits Near-Term Work: fixture cases for common form layouts.
+    validations:
+      required: false
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Popup UI
+        - Form filling
+        - Country generation
+        - My Profile
+        - Temporary inbox
+        - AI mapping
+        - Release tooling
+        - Documentation
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: What would prove this is done?
+      placeholder: The release verifier passes, the manual fixture still protects sensitive decoys, and the popup text fits at 460px.
+    validations:
+      required: true
+  - type: checkboxes
+    id: boundary
+    attributes:
+      label: Safety boundary
+      options:
+        - label: This request does not require storing or auto-filling full card numbers, CVV, SSN, or generated sensitive fields.
+          required: true

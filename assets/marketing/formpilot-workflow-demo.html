@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FormPilot Workflow Demo</title>
+  <link rel="icon" href="../../icons/icon16.png" type="image/png">
+  <style>
+    :root {
+      --bg: #0b1117;
+      --panel: #111a25;
+      --panel-2: #172232;
+      --text: #f8fafc;
+      --muted: #aebbd0;
+      --line: rgba(255, 255, 255, 0.12);
+      --cyan: #7dd3fc;
+      --green: #34d399;
+      --amber: #fbbf24;
+      --danger: #f87171;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      width: 1600px;
+      height: 900px;
+      overflow: hidden;
+      font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+      background:
+        radial-gradient(circle at 18% 18%, rgba(125, 211, 252, 0.14), transparent 34%),
+        radial-gradient(circle at 82% 22%, rgba(52, 211, 153, 0.12), transparent 32%),
+        linear-gradient(135deg, #0b1117 0%, #121a27 54%, #08111f 100%);
+      color: var(--text);
+    }
+
+    .workflow {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      padding: 64px 88px 58px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 30px;
+    }
+
+    .workflow::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0.16;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+      background-size: 64px 64px;
+      mask-image: linear-gradient(to bottom, transparent 0%, black 12%, black 88%, transparent 100%);
+      pointer-events: none;
+    }
+
+    .header,
+    .journey,
+    .boundary {
+      position: relative;
+      z-index: 1;
+    }
+
+    .header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 36px;
+      align-items: end;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      height: 34px;
+      padding: 0 13px;
+      border-radius: 999px;
+      border: 1px solid rgba(125, 211, 252, 0.32);
+      background: rgba(125, 211, 252, 0.08);
+      color: var(--cyan);
+      font-size: 14px;
+      font-weight: 850;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      margin: 22px 0 0;
+      max-width: 900px;
+      font-size: 60px;
+      line-height: 1.03;
+      letter-spacing: 0;
+      font-weight: 850;
+    }
+
+    .intro {
+      max-width: 440px;
+      margin: 0 0 6px;
+      color: var(--muted);
+      font-size: 19px;
+      line-height: 1.4;
+      font-weight: 620;
+    }
+
+    .journey {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .step {
+      min-width: 0;
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 14px;
+      padding: 18px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(17, 26, 37, 0.86);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.28);
+      overflow: hidden;
+    }
+
+    .step-head {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-height: 44px;
+    }
+
+    .number {
+      flex: 0 0 auto;
+      display: inline-grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      border: 1px solid rgba(125, 211, 252, 0.34);
+      background: rgba(125, 211, 252, 0.1);
+      color: var(--cyan);
+      font-size: 15px;
+      font-weight: 900;
+    }
+
+    .step h2 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.12;
+      letter-spacing: 0;
+      font-weight: 850;
+    }
+
+    .step p {
+      min-height: 50px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.35;
+      font-weight: 620;
+    }
+
+    .screen {
+      position: relative;
+      height: 314px;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: var(--panel-2);
+    }
+
+    .screen img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+    }
+
+    .screen.profile img {
+      object-position: top center;
+    }
+
+    .screen.fixture img {
+      object-position: top center;
+    }
+
+    .badge {
+      position: absolute;
+      left: 12px;
+      bottom: 12px;
+      max-width: calc(100% - 24px);
+      min-height: 38px;
+      display: inline-flex;
+      align-items: center;
+      padding: 0 12px;
+      border-radius: 8px;
+      border: 1px solid rgba(52, 211, 153, 0.3);
+      background: rgba(7, 17, 31, 0.9);
+      color: #c8f7df;
+      font-size: 13px;
+      line-height: 1.15;
+      font-weight: 850;
+      box-shadow: 0 14px 36px rgba(0, 0, 0, 0.28);
+    }
+
+    .step.scan .badge {
+      border-color: rgba(125, 211, 252, 0.34);
+      color: #d4f0ff;
+    }
+
+    .step.review .badge {
+      border-color: rgba(251, 191, 36, 0.36);
+      color: #fee7a7;
+    }
+
+    .step.fill .badge {
+      border-color: rgba(52, 211, 153, 0.34);
+      color: #c8f7df;
+    }
+
+    .boundary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .rule {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 12px;
+      align-items: center;
+      min-height: 78px;
+      padding: 17px 18px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.055);
+    }
+
+    .rule-mark {
+      display: inline-grid;
+      place-items: center;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(52, 211, 153, 0.12);
+      color: var(--green);
+      font-size: 20px;
+      font-weight: 900;
+    }
+
+    .rule.danger .rule-mark {
+      background: rgba(248, 113, 113, 0.12);
+      color: var(--danger);
+    }
+
+    .rule.neutral .rule-mark {
+      background: rgba(125, 211, 252, 0.12);
+      color: var(--cyan);
+    }
+
+    .rule strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 17px;
+      line-height: 1.1;
+    }
+
+    .rule span {
+      display: block;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.3;
+      font-weight: 650;
+    }
+  </style>
+</head>
+
+<body>
+  <section class="workflow" aria-label="FormPilot workflow demo">
+    <header class="header">
+      <div>
+        <div class="eyebrow">FormPilot safe-fill workflow</div>
+        <h1>Prepare. Scan. Review. Fill intentionally.</h1>
+      </div>
+      <p class="intro">A compact journey for GitHub and Chrome Web Store reviewers: real popup surfaces, explicit user action, and a visible sensitive-field boundary.</p>
+    </header>
+
+    <main class="journey" aria-label="FormPilot prepare scan review fill sequence">
+      <article class="step prepare">
+        <div class="step-head">
+          <div class="number">01</div>
+          <h2>Prepare profile</h2>
+        </div>
+        <p>Generate local-looking test data or keep reusable contact details in My Profile.</p>
+        <div class="screen profile">
+          <img src="../../output/playwright/popup-profile.png" alt="FormPilot My Profile prepared contact and payment summary">
+          <div class="badge">Reusable contact profile</div>
+        </div>
+      </article>
+
+      <article class="step scan">
+        <div class="step-head">
+          <div class="number">02</div>
+          <h2>Scan active page</h2>
+        </div>
+        <p>Read the visible form shape on the active tab before changing any field values.</p>
+        <div class="screen">
+          <img src="../../output/playwright/popup-main.png" alt="FormPilot active-page scan preview in the popup">
+          <div class="badge">Visible fields only</div>
+        </div>
+      </article>
+
+      <article class="step review">
+        <div class="step-head">
+          <div class="number">03</div>
+          <h2>Review fill plan</h2>
+        </div>
+        <p>Check readiness, likely matches, required gaps, and sensitive fields that will be skipped.</p>
+        <div class="screen">
+          <img src="../../output/playwright/popup-settings.png" alt="FormPilot readiness and settings surfaces before fill">
+          <div class="badge">Plan before action</div>
+        </div>
+      </article>
+
+      <article class="step fill">
+        <div class="step-head">
+          <div class="number">04</div>
+          <h2>Fill by explicit action</h2>
+        </div>
+        <p>Click Fill, My Profile fill, or the shortcut when the preview looks right.</p>
+        <div class="screen fixture">
+          <img src="../../output/playwright/form-fixture-mobile.png" alt="FormPilot fixture showing form-fill QA result">
+          <div class="badge">Fixture verified</div>
+        </div>
+      </article>
+    </main>
+
+    <footer class="boundary" aria-label="FormPilot safety boundary">
+      <div class="rule neutral">
+        <div class="rule-mark">1</div>
+        <div>
+          <strong>Public profile payload only</strong>
+          <span>Main Fill and shortcut fill strip generated sensitive data before messaging the page.</span>
+        </div>
+      </div>
+      <div class="rule danger">
+        <div class="rule-mark">!</div>
+        <div>
+          <strong>Sensitive fields stay skipped or manual</strong>
+          <span>Full card numbers, CVV, SSN, and identity credentials remain outside normal autofill.</span>
+        </div>
+      </div>
+      <div class="rule">
+        <div class="rule-mark">2</div>
+        <div>
+          <strong>No permanent content script</strong>
+          <span>FormPilot injects page logic only after the user requests an active-tab fill.</span>
+        </div>
+      </div>
+    </footer>
+  </section>
+</body>
+
+</html>

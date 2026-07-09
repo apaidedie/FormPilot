@@ -1,0 +1,49 @@
+{
+  "manifest_version": 3,
+  "name": "FormPilot - Smart Form Testing Assistant",
+  "version": "1.8.0",
+  "description": "Generate local-looking test profiles and fill forms from a privacy-conscious MV3 popup.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "storage",
+    "contextMenus"
+  ],
+  "host_permissions": [
+    "http://ip-api.com/*",
+    "https://ipapi.co/*",
+    "https://www.meiguodizhi.com/*",
+    "https://api.mail.tm/*",
+    "https://api.geoapify.com/*",
+    "https://nominatim.openstreetmap.org/*",
+    "https://api.openai.com/*"
+  ],
+  "optional_host_permissions": [
+    "https://*/*",
+    "http://*/*"
+  ],
+  "commands": {
+    "fill-form": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+F",
+        "mac": "Command+Shift+F"
+      },
+      "description": "填写表单"
+    }
+  }
+}
